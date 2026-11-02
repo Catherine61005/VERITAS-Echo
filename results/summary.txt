@@ -1,0 +1,25 @@
+FileList.csv: 10,030 videos, columns = ['FileName', 'EF', 'ESV', 'EDV', 'FrameHeight', 'FrameWidth', 'FPS', 'NumberOfFrames', 'Split']
+Splits: {'TRAIN': 7465, 'VAL': 1288, 'TEST': 1277}
+EF: mean 55.75, median 59.21, min 6.91, max 96.97
+  EF <= 40%: 1,264 videos (12.6%)
+     40-55%: 1,805 videos (18.0%)
+      > 55%: 6,961 videos (69.4%)
+Frame sizes: {(112, 112): 10024, (768, 1024): 5, (768, 1040): 1}
+Frames per video: median 171, range 28-1002
+Label consistency: max |EF - (EDV-ESV)/EDV*100| = 0.0000
+ESV >= EDV: 0   non-positive volumes: 0
+
+VolumeTracings.csv: 425,010 rows, 10,025 videos
+Traced frames per video: {2: 10025}
+Rows per traced frame: {16: 1, 18: 1, 21: 19942, 41: 1, 42: 49, 63: 38, 84: 14, 105: 2, 147: 1, 168: 1}  (21 = 1 long axis + 20 chords; more = duplicate tracing)
+Videos in FileList with no tracing: 6
+
+Simpson's-disk EF vs label EF on 10,024 videos:
+  MAE 1.04 EF points, median 0.66, bias -0.64, r = 0.973
+  EF <= 40%: MAE 1.29
+     40-55%: MAE 1.21
+      > 55%: MAE 0.95
+  Flagged (|error| > 10): 65 videos (0.6%)
+  Worst 5: 0X4EA078CC4E65B6A3 (label 83.4, ours 1.3), 0X753AA26EA352BBB (label 79.5, ours 2.7), 0X354B37A25C64276F (label 97.0, ours 27.4), 0X3EB0FC2695B0AB5F (label 86.0, ours 18.0), 0X766B7B0ABDB07CD5 (label 69.5, ours 6.5)
+Saved tracing overlay for 0X5CAA16702850040C
+Saved tracing overlay for 0X4EA078CC4E65B6A3
