@@ -314,7 +314,7 @@ def calibrate_thresholds(tracings_csv, filelist_csv, fps_default=50.0, percentil
     rates, periodicities = [], []
     for f, g in vt.groupby(name_col):
         frames = sorted(g.Frame.unique())
-        vols = []
+        vols, used_frames = [], []
         for fr in frames:
             rows = g[g.Frame == fr][["X1", "Y1", "X2", "Y2"]].values[:21]
             if len(rows) < 2:
@@ -322,16 +322,22 @@ def calibrate_thresholds(tracings_csv, filelist_csv, fps_default=50.0, percentil
             long_axis = np.hypot(rows[0, 2] - rows[0, 0], rows[0, 3] - rows[0, 1])
             d = np.hypot(rows[1:, 2] - rows[1:, 0], rows[1:, 3] - rows[1:, 1])
             vols.append(np.pi / 4 * np.sum(d ** 2) * long_axis / len(d))
+            used_frames.append(fr)
         if len(vols) >= 2:
             v = np.array(vols)
-            rates.append(np.max(np.abs(np.diff(v))) / v.max())
+            # Traced frames are usually ED and ES, many frames apart. Dividing by the frame gap
+            # gives the AVERAGE per-frame change between them; the true peak per-frame change is
+            # at least this large, so a percentile of it is a lower bound for kappa_max.
+            gaps = np.maximum(np.diff(np.array(used_frames, dtype=float)), 1.0)
+            rates.append(np.max(np.abs(np.diff(v)) / gaps) / v.max())
         if len(vols) >= 6:
             periodicities.append(periodicity_score(vols))
     kappa_max = float(np.percentile(rates, percentile)) if rates else DEFAULT_KAPPA_MAX
     rho_min = float(np.percentile(periodicities, 100 - percentile)) if periodicities else DEFAULT_RHO_MIN
     print(f"Calibrated from {len(rates)} videos (ED/ES-only dV/dt) and {len(periodicities)} "
           f"videos with >=6 traced frames (periodicity):")
-    print(f"  kappa_max (P{percentile:g}) = {kappa_max:.3f}")
+    print(f"  kappa_max lower bound (P{percentile:g} of the average per-frame change between "
+          f"traced frames) = {kappa_max:.3f} of EDV per frame")
     print(f"  rho_min   (P{100 - percentile:g}) = {rho_min:.3f}")
     print("  NOTE: most EchoNet-Dynamic videos only have 2 traced frames (ED, ES), so the "
           "periodicity estimate above is likely thin - treat rho_min as a starting point, "

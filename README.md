@@ -23,6 +23,7 @@ VERITAS-Echo is a research project focused on verifying cardiac function analysi
 ├── veritas_phase0_audit.py      # Phase 0: EchoNet-Dynamic profiling + Simpson's-disk EF audit
 ├── veritas_dataset_audit.py     # Audit for all five datasets (dynamic, pediatric, camus, synthetic)
 ├── veritas_inner_loop.py        # Inner loop: preprocess -> segment -> volume -> EF -> physics check -> retry
+├── veritas_inner_loop_visual.py # Animated GIF of the inner loop on one video, for demos
 ├── veritas_outer_loop.py        # Outer loop data side: capped mixer, test-leak guard, Tail Guard, tail replay
 ├── veritas_demo.py              # Runs everything above in one command, for reviews
 ├── results/                     # Example Phase 0 audit outputs and visualizations
@@ -139,10 +140,12 @@ python veritas_dataset_audit.py --dataset synthetic --real-video real.avi --synt
 python veritas_inner_loop.py --selftest
 python veritas_inner_loop.py --calibrate --tracings VolumeTracings.csv --filelist FileList.csv
 python veritas_inner_loop.py --video clip.avi --sex F --age 54
+python veritas_inner_loop_visual.py --video clip.avi --sex F --age 54   # writes clip_inner_loop.gif (needs matplotlib, pillow)
 ```
 
 - Heart rate is read from the volume curve and checked against age-dependent bounds that accept an athlete's ~40 bpm.
 - A verified EF is interpreted with the ASE/EACVI 2015 sex-specific ranges (men 52-72%, women 54-74%); adult cut-offs are not applied under 18.
+- `--calibrate` gives a lower bound for kappa_max from the expert tracings: on EchoNet-Dynamic, 0.074 of EDV per frame (ED to ES takes a median of 16 frames).
 - The `classical` segmentation backend is a threshold placeholder, **not** SAM-2. The `sam2` backend is a marked integration point.
 
 ## Outer loop (`veritas_outer_loop.py`)
