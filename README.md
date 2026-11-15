@@ -2,9 +2,9 @@
 
 **Physics-Grounded Multi-Agent Verification for Collapse-Resistant, Self-Improving Cardiac Function AI in Echocardiography**
 
-VERITAS-Echo is a research project focused on verifying cardiac function analysis in echocardiography using physics-grounded checks. The current repository provides a Phase 0 audit utility for EchoNet-Dynamic: it profiles dataset metadata and checks labeled ejection fraction (EF) against EF recomputed from expert volume tracings with Simpson’s method of disks.
+VERITAS-Echo is a research project focused on verifying cardiac function analysis in echocardiography using physics-grounded checks. The repository contains the Phase 0 audit for EchoNet-Dynamic, a dataset audit for all five datasets, the inner loop and its visual demo, the outer-loop safety rules, and a one-command demo (see Repository layout).
 
-> **Current scope:** The code in this repository is a dataset-audit script, not a trained cardiac-function model or a clinical application. Its outputs are for research and data-quality investigation, not diagnosis or treatment.
+> **Current scope:** The code in this repository is research code (dataset audits, inner loop, outer-loop rules), not a trained cardiac-function model or a clinical application. Its outputs are for research and data-quality investigation, not diagnosis or treatment.
 
 ## What the audit does
 
