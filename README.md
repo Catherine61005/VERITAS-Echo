@@ -20,8 +20,17 @@ VERITAS-Echo is a research project focused on verifying cardiac function analysi
 
 ```text
 .
-├── veritas_phase0_audit.py   # Dataset profiling and Simpson’s-disk EF audit
-└── results/                  # Example audit outputs and visualizations
+├── veritas_phase0_audit.py      # Phase 0: EchoNet-Dynamic profiling + Simpson's-disk EF audit
+├── veritas_dataset_audit.py     # Audit for all five datasets (dynamic, pediatric, camus, synthetic)
+├── veritas_inner_loop.py        # Inner loop: preprocess -> segment -> volume -> EF -> physics check -> retry
+├── veritas_outer_loop.py        # Outer loop data side: capped mixer, test-leak guard, Tail Guard, tail replay
+├── veritas_demo.py              # Runs everything above in one command, for reviews
+├── results/                     # Example Phase 0 audit outputs and visualizations
+└── docs/
+    ├── requirements/            # SRS for the inner loop and the outer loop
+    ├── architecture/            # SAD for the inner loop and the outer loop
+    ├── test-plans/              # Test plans for the inner loop and the outer loop
+    └── report/                  # ESA report, Chapter 7: Implementation
 ```
 
 The committed `results/` files are sample outputs from an audit run; rerunning the script writes fresh files to the selected output directory.
@@ -99,3 +108,51 @@ These are implementation choices for this audit and should be considered when in
 ## License and citation
 
 No license or citation instructions are currently provided in this repository. Check the dataset's official documentation for its terms and citation requirements before using or redistributing dataset-derived material. Add project-specific license and citation information here when available.
+
+
+## Quick demo
+
+```bash
+pip install pandas numpy matplotlib opencv-python
+python veritas_demo.py                                                  # self-tests only, no data needed
+python veritas_demo.py --filelist FileList.csv --tracings VolumeTracings.csv   # adds the real-data audit
+```
+
+## Dataset audit (`veritas_dataset_audit.py`)
+
+```bash
+python veritas_dataset_audit.py --dataset dynamic   --filelist FileList.csv --tracings VolumeTracings.csv
+python veritas_dataset_audit.py --dataset pediatric --filelist FileList.csv --tracings VolumeTracings.csv --duplicate-tail 2
+python veritas_dataset_audit.py --dataset camus     --camus-root /path/to/CAMUS/training     # needs SimpleITK
+python veritas_dataset_audit.py --dataset synthetic --real-video real.avi --synthetic-video synth.avi \
+                                --labels synth_labels.csv --filelist FileList.csv
+```
+
+- Every mode prints an attribute-relevance table: which columns are used and why.
+- `pediatric` reports EF error by age band, sex and BMI; `camus` by sex, age band, image quality and the EF <= 40% tail.
+- `synthetic` compares real and synthetic data with a KS distance on EF and an intensity-histogram overlap.
+- Verified on real data: `dynamic`. Tested on synthetic stand-in data only: `pediatric`, `camus`, `synthetic`.
+
+## Inner loop (`veritas_inner_loop.py`)
+
+```bash
+python veritas_inner_loop.py --selftest
+python veritas_inner_loop.py --calibrate --tracings VolumeTracings.csv --filelist FileList.csv
+python veritas_inner_loop.py --video clip.avi --sex F --age 54
+```
+
+- Heart rate is read from the volume curve and checked against age-dependent bounds that accept an athlete's ~40 bpm.
+- A verified EF is interpreted with the ASE/EACVI 2015 sex-specific ranges (men 52-72%, women 54-74%); adult cut-offs are not applied under 18.
+- The `classical` segmentation backend is a threshold placeholder, **not** SAM-2. The `sam2` backend is a marked integration point.
+
+## Outer loop (`veritas_outer_loop.py`)
+
+```bash
+python veritas_outer_loop.py --selftest
+python veritas_outer_loop.py --filelist FileList.csv --synthetic-labels synth.csv --ratio 0.05 --replay-every 20
+```
+
+- Synthetic share is capped at 75%; a fully synthetic generation is refused.
+- Videos in the TEST split can never enter a training index.
+- The Tail Guard restores a minimum EF <= 40% share after filtering, and tail videos are replayed every K items.
+- Not built yet: learned verifiers V1-V3, LLM auditor V5, ensemble V6, retraining, Collapse Observatory.
